@@ -2,6 +2,7 @@ import { Matrix, Quaternion, TransformNode, Vector3 } from '@babylonjs/core';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useEngine } from 'react-babylonjs';
 import { useTexture } from '../hooks/useTexture';
+import { useXR } from '../hooks/useXR';
 import { TARGET_LENGTH } from '../utils/Constants';
 
 export const PlayerCamera = () => {
@@ -10,6 +11,7 @@ export const PlayerCamera = () => {
     const cameraRef = useRef();
     const transformNodeRef = useRef<TransformNode>();
     const texture = useTexture('crosshair');
+    const xr = useXR();
 
     const cameraHandler = useCallback((e) => {
         if (!transformNodeRef.current) return;
@@ -46,7 +48,7 @@ export const PlayerCamera = () => {
 
     return (
         <transformNode name="cameraTransform" ref={transformNodeRef} position={new Vector3(0, 0, 0)}>
-            {texture && (
+            {texture && !xr && (
                 <transformNode name="targetTransform" position={new Vector3(0, 0, TARGET_LENGTH)}>
                     <plane
                         position={new Vector3(0, 0, -(TARGET_LENGTH - 1))}

@@ -8,6 +8,14 @@ const canvasStyles = {
     left: 0,
     cursor: 'none',
 };
+const canvasDivStyles = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    cursor: 'none',
+};
 
 class ReactBabylonjsEngine extends React.Component {
     constructor(props) {
@@ -109,7 +117,7 @@ class ReactBabylonjsEngine extends React.Component {
         // TODO: this.props.portalCanvas does not need to render a canvas.
         return (
             <EngineCanvasContext.Provider value={{ engine: this.engine, canvas: this.canvas }}>
-                <div style={canvasStyles}>
+                <div style={canvasDivStyles}>
                     <canvas style={canvasStyles} {...opts} ref={this.onCanvasRef}>
                         {this.engine !== null && this.props.children}
                     </canvas>

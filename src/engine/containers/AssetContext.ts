@@ -3,6 +3,8 @@ import {
     AssetContainer,
     AssetsManager,
     ContainerAssetTask,
+    Mesh,
+    MeshBuilder,
     Scene,
     Texture,
     TextureAssetTask,
@@ -10,26 +12,61 @@ import {
 import parsePath from 'parse-filepath';
 import React, { useEffect, useState } from 'react';
 import { useScene } from 'react-babylonjs';
+import { QualityName } from '../utils/Constants';
+import { LS } from './LSContainer';
 
-interface IAssetContext {
+export interface IAssetContext {
     containers: {
         [key: string]: AssetContainer | undefined;
     };
     textures: {
         [key: string]: Texture | undefined;
     };
+    meshes: {
+        [key: string]: Mesh | undefined;
+    };
 }
 
 const defaultAssetContext: () => IAssetContext = () => ({
     containers: {},
     textures: {},
+    meshes: {},
 });
 
 export const AssetContext = React.createContext<IAssetContext>(defaultAssetContext());
 
+const qualityMap: {
+    [key in QualityName]: {
+        segments: number;
+    };
+} = {
+    Hi: { segments: 10 },
+    Med: { segments: 6 },
+    Low: { segments: 3 },
+};
+
+const assetFunctions: { [key: string]: (scene: Scene) => Mesh } = {
+    sphere: (scene) => {
+        const mesh = MeshBuilder.CreateSphere(
+            'sphere',
+            {
+                diameter: 2,
+                segments: qualityMap[LS.QUALITY].segments || 10,
+                updatable: false,
+            },
+            scene,
+        );
+
+        mesh.isVisible = false;
+        return mesh;
+    },
+};
+
 const loadAssets = async (scene: Scene, assetPaths: string[]) => {
     return new Promise<IAssetContext>((resolve, reject) => {
         const assetsManager = new AssetsManager(scene);
+
+        const loadedMeshes: { [key: string]: Mesh } = {};
 
         assetPaths.forEach((path) => {
             let assetTask: AbstractAssetTask;
@@ -54,6 +91,9 @@ const loadAssets = async (scene: Scene, assetPaths: string[]) => {
                     assetTask = assetsManager.addContainerTask(name, '', directory + '/', base);
                     assetTask.onError = console.error;
                     break;
+                case '.function':
+                    loadedMeshes[name] = assetFunctions[name](scene);
+                    break;
                 default:
                     reject(`Unknown asset extension ${extension}`);
             }
@@ -75,6 +115,8 @@ const loadAssets = async (scene: Scene, assetPaths: string[]) => {
                 }
                 reject('task was not an instanceof any known AssetTask');
             });
+
+            assets.meshes = loadedMeshes;
 
             resolve(assets);
         };

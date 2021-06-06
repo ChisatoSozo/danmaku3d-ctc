@@ -14,10 +14,26 @@ export const MAX_BOMBS = 8;
 export const MAX_BULLETS_PER_GROUP = 100000;
 export const PLAYER_BULLETS_WHEEL_LENGTH = 50;
 
-export const nullVector = new Vector3(-510, -510, -510)
+export const nullNumber = -510;
+export const nullVector = new Vector3(nullNumber, nullNumber, nullNumber);
 export const zVector = new Vector3(0, 0, 1);
 
 export const GRAZE_DISTANCE = 0.5;
 export const PLAYER_INVULNERABLE_COOLDOWN = 2;
 export const PLAYER_BOMB_DURATION = 8;
 export const TARGET_LENGTH = 15;
+
+export const BULLET_WARNING = 0.2;
+
+export type DifficultyName = 'Easy' | 'Normal' | 'Hard' | 'Lunatic';
+export type DifficultyNumber = 1 | 2 | 3 | 4;
+export const DIFFICULTY: {
+    [key in DifficultyName]: DifficultyNumber;
+} = {
+    Easy: 1,
+    Normal: 2,
+    Hard: 3,
+    Lunatic: 4,
+};
+
+export type QualityName = 'Low' | 'Med' | 'Hi';
