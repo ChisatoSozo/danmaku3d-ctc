@@ -17,15 +17,14 @@ const patternMap: {
     makeBurstPattern,
 };
 
-interface MakeBulletPatternArgs {
-    patternOptions: PatternOptions;
-    cache: BulletCache;
-    scene: Scene;
-    firstCompute?: boolean;
-}
-type MakeBulletPattern = (args: MakeBulletPatternArgs) => BulletPattern;
+type MakeBulletPattern = (
+    patternOptions: PatternOptions,
+    cache: BulletCache,
+    scene: Scene,
+    firstCompute?: boolean,
+) => BulletPattern;
 
-export const makeBulletPattern: MakeBulletPattern = ({ patternOptions, cache, scene, firstCompute = false }) => {
+export const makeBulletPattern: MakeBulletPattern = (patternOptions, cache, scene, firstCompute = false) => {
     const uid = patternOptions.uid;
     const precomputedBulletPattern = cache.patterns[patternOptions.uid];
     if (precomputedBulletPattern) {
@@ -84,7 +83,7 @@ export const makeBulletPattern: MakeBulletPattern = ({ patternOptions, cache, sc
 
     if (!precomputedBulletPattern && !patternOptions.disablePrecomputation) {
         cache.patterns[uid] = computedPattern;
-        cache.positionTextureCache[uid] = computeSourceTextures(computedPattern, scene);
+        cache.textureCache[uid] = computeSourceTextures(computedPattern, scene);
     }
 
     computedPattern.uid = uid;

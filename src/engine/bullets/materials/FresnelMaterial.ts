@@ -2,7 +2,7 @@ import { Color3, Effect, ShaderMaterial } from '@babylonjs/core';
 import { v4 as uuid } from 'uuid';
 import { MakeMaterial } from '.';
 import { glsl } from '../../utils/BabylonUtils';
-import { commonVertexShaderWithWarning } from './CommonShaders';
+import { commonVertexShaderWithWarning } from './CommonMaterialShaders';
 
 export const fresnelVertexShader = commonVertexShaderWithWarning;
 export const fresnelFragmentShader = glsl`

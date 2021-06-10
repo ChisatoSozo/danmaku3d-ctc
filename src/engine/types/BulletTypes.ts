@@ -1,4 +1,5 @@
 import { RawTexture, Texture, Vector3 } from '@babylonjs/core';
+import { BulletType } from '../bullets/behaviour/EnemyBulletBehaviour';
 import { RandVectorIn } from '../utils/BabylonUtils';
 import { DifficultyNumber } from '../utils/Constants';
 
@@ -11,6 +12,7 @@ export interface MaterialOptions {
     material: string;
     color: number[];
     doubleSided: boolean;
+    uid: string;
     hasAlpha?: boolean;
     alpha?: number;
 }
@@ -32,24 +34,32 @@ export interface PatternOptions {
     thetaLength?: number;
     yStart?: number;
     yLength?: number;
+
+    sourceBulletId?: string;
 }
 
 export interface EndTimingOptions {
     timing: string;
+    uid: string;
 }
 
 export interface MeshOptions {
     mesh: string;
     radius: number;
+    uid: string;
 }
 
 export interface BehaviourOptions {
     behaviour: string;
+    bulletValue: number;
+    bulletType?: BulletType;
+    uid: string;
 }
 
 export interface SoundOptions {
     mute: boolean;
     sound: string;
+    uid: string;
 }
 
 export type BulletInstruction = {
@@ -90,13 +100,15 @@ export interface BulletPattern {
 }
 
 export interface BulletCache {
-    positionTextureCache: {
+    textureCache: {
         [uid: string]: {
             initialPositions: RawTexture;
-            velocities: RawTexture;
+            initialVelocities: RawTexture;
             timings: RawTexture;
             positions: RawTexture;
+            velocities: RawTexture;
             collisions: RawTexture;
+            endTimings?: RawTexture;
         };
     };
     patterns: {

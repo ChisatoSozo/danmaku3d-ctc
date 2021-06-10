@@ -1,11 +1,15 @@
+import { TransformNode } from '@babylonjs/core';
 import { isFunction } from 'lodash';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { useScene } from 'react-babylonjs';
 import { v4 as uuid } from 'uuid';
-import { BulletInstruction, PreBulletInstruction, UnevalBulletInstruction } from '../types/BulletTypes';
+import { BULLET_TYPE } from '../bullets/behaviour/EnemyBulletBehaviour';
+import { makeBulletPattern } from '../bullets/patterns';
+import { BulletCache, BulletInstruction, PreBulletInstruction, UnevalBulletInstruction } from '../types/BulletTypes';
 import { DeepPartial } from '../types/UtilTypes';
 import { LS } from './LSContainer';
 
-const defaultBulletInstruction = {
+const defaultBulletInstruction: UnevalBulletInstruction = {
     materialOptions: {
         material: 'fresnel',
         color: [1, 0, 0],
@@ -31,6 +35,8 @@ const defaultBulletInstruction = {
     },
     behaviourOptions: {
         behaviour: 'linear',
+        bulletValue: 1,
+        bulletType: BULLET_TYPE.BULLET,
         uid: () => uuid(),
     },
     soundOptions: {
@@ -79,20 +85,93 @@ const prepareBulletInstruction = (instruction: DeepPartial<PreBulletInstruction>
     return newInstruction as BulletInstruction;
 };
 
+type AddBulletGroup = (
+    parent: TransformNode,
+    instruction: DeepPartial<PreBulletInstruction>,
+    sourceBulletId?: string,
+    supressNotPrecomputedWarning?: boolean,
+) => BulletInstruction | undefined;
+
 interface IBulletContext {
-    addBulletGroup: (instruction: DeepPartial<PreBulletInstruction>) => BulletInstruction | undefined;
+    addBulletGroup: AddBulletGroup;
 }
 
 const defaultBulletContext: () => IBulletContext = () => ({
-    addBulletGroup: (instruction: DeepPartial<PreBulletInstruction>) => prepareBulletInstruction(instruction),
+    addBulletGroup: () => undefined,
 });
 
 export const BulletContext = React.createContext<IBulletContext>(defaultBulletContext());
 
 export const useBulletContext = () => {
-    const addBulletGroup = useCallback((instruction: DeepPartial<PreBulletInstruction>) => {
-        return prepareBulletInstruction(instruction);
-    }, []);
+
+    const bulletCache = useMemo<BulletCache>(() => ({
+        textureCache: {},
+        patterns: {}
+    }), [])
+
+    const scene = useScene()
+
+    const addBulletGroup = useCallback(
+        (
+            parent: TransformNode,
+            instruction: DeepPartial<PreBulletInstruction>,
+            sourceBulletId = false,
+            supressNotPrecomputedWarning = false,
+        ) => {
+            if (!parent) throw new Error('parent not ready!');
+
+            const preparedInstruction = prepareBulletInstruction(instruction);
+            if (!preparedInstruction) return;
+            if (sourceBulletId) preparedInstruction.patternOptions.sourceBulletId = sourceBulletId;
+
+            const { positions, velocities, timings, uid } = makeBulletPattern(
+                preparedInstruction.patternOptions,
+                bulletCache
+                scene,
+                supressNotPrecomputedWarning,
+            );
+            const material = makeBulletMaterial(preparedInstruction.materialOptions, parent, assets, scene);
+            const { mesh, radius } = makeBulletMesh(preparedInstruction.meshOptions, assets, getMesh);
+            const behaviour = makeBulletBehaviour(preparedInstruction.behaviourOptions, environmentCollision, radius, parent);
+            const endTimings = makeEndTimings(preparedInstruction.endTimings, preparedInstruction.lifespan, timings.length, scene);
+            const sounds =
+                preparedInstruction.soundOptions &&
+                !preparedInstruction.soundOptions.mute &&
+                makeBulletSound(preparedInstruction.soundOptions, timings);
+
+            mesh.makeInstances(timings.length);
+            mesh.material = material;
+
+            const reliesOnParent = preparedInstruction.behaviourOptions.reliesOnParent;
+            const disableWarning = preparedInstruction.behaviourOptions.disableWarning || false;
+
+            behaviour.init(material, positions, velocities, timings, endTimings, reliesOnParent, disableWarning, uid, scene);
+
+            const { lifespan } = preparedInstruction;
+            const timeSinceStart = 0;
+
+            const bulletGroup = new BulletGroup({
+                material,
+                mesh,
+                behaviour,
+                sounds,
+                positions,
+                velocities,
+                timings,
+                endTimings,
+                lifespan,
+                timeSinceStart,
+                uid,
+                instruciton: preparedInstruction,
+                releaseMesh,
+            });
+
+            const newID = makeName('bulletGroup');
+            allBullets[newID] = bulletGroup;
+            return newID;
+        },
+        [scene, assets, getMesh, environmentCollision, releaseMesh],
+    );
 
     return { addBulletGroup };
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useResolveFloatTextureReadPixels } from '../hooks/useResolveFloatTextureReadPixels';
 import { AssetContext, useAssetContext } from './AssetContext';
 import { BulletContext, useBulletContext } from './BulletContext';
 import { ControlsContext, useControlsContext } from './ControlsContext';
@@ -16,6 +17,9 @@ export const GameContainer: React.FC<GameContainerProps> = ({ children, assetPat
     const controls = useControlsContext(false);
     const xr = useXRContext(xrEnabled);
     useLS();
+
+    //Engine stuff
+    useResolveFloatTextureReadPixels();
 
     return (
         <AssetContext.Provider value={assets}>

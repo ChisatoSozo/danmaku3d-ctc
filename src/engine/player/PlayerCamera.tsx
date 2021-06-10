@@ -13,29 +13,35 @@ export const PlayerCamera = () => {
     const texture = useTexture('crosshair');
     const xr = useXR();
 
-    const cameraHandler = useCallback((e) => {
-        if (!transformNodeRef.current) return;
+    const cameraHandler = useCallback(
+        (e) => {
+            if (!transformNodeRef.current) return;
+            if (xr && transformNodeRef.current.parent) {
+                xr.input.xrCamera.position.copyFrom((transformNodeRef.current.parent as TransformNode).position);
+                return;
+            }
+            const x = e.offsetX;
+            const y = e.offsetY;
+            const width = e.target.offsetWidth;
+            const height = e.target.offsetHeight;
 
-        const x = e.offsetX;
-        const y = e.offsetY;
-        const width = e.target.offsetWidth;
-        const height = e.target.offsetHeight;
+            const right = x / width - 0.5;
+            const up = y / height - 0.5;
 
-        const right = x / width - 0.5;
-        const up = y / height - 0.5;
+            const upM = Matrix.RotationX(Math.PI * up);
+            const rightM = Matrix.RotationY(Math.PI * right);
 
-        const upM = Matrix.RotationX(Math.PI * up);
-        const rightM = Matrix.RotationY(Math.PI * right);
+            const matrix = Matrix.Identity().multiply(upM).multiply(rightM);
 
-        const matrix = Matrix.Identity().multiply(upM).multiply(rightM);
+            const _ = new Vector3();
+            const rotation = new Quaternion();
 
-        const _ = new Vector3();
-        const rotation = new Quaternion();
+            matrix.decompose(_, rotation);
 
-        matrix.decompose(_, rotation);
-
-        transformNodeRef.current.rotationQuaternion = rotation;
-    }, []);
+            transformNodeRef.current.rotationQuaternion = rotation;
+        },
+        [xr],
+    );
 
     useEffect(() => {
         if (!canvas) return;
@@ -47,7 +53,7 @@ export const PlayerCamera = () => {
     }, [canvas, cameraHandler]);
 
     return (
-        <transformNode name="cameraTransform" ref={transformNodeRef} position={new Vector3(0, 0, 0)}>
+        <transformNode name="cameraTransform" ref={transformNodeRef} position={new Vector3(0, 5, 0)}>
             {texture && !xr && (
                 <transformNode name="targetTransform" position={new Vector3(0, 0, TARGET_LENGTH)}>
                     <plane

@@ -4,7 +4,7 @@ import { Scene } from './stages/Scene';
 
 function App() {
     return (
-        <Danmaku3D assetPaths={[`${process.env.PUBLIC_URL}/assets/stage1/forestA.glb`]} xrEnabled>
+        <Danmaku3D assetPaths={[`${process.env.PUBLIC_URL}/assets/stage1/forestA.glb`]}>
             <Scene />
         </Danmaku3D>
     );
