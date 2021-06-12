@@ -21,6 +21,16 @@ interface ILS {
     QUALITY: QualityName;
     SFX: 'ON' | 'OFF';
     MUSIC: 'ON' | 'OFF';
+    INITIAL_PLAYER: number;
+    INITIAL_BOMB: number;
+
+    //Ingame numbers
+    SCORE: number;
+    POINT: number;
+    PLAYER: number;
+    BOMB: number;
+    POWER: number;
+    GRAZE: number;
 
     NEW_SCORE: number;
     HIGH_SCORES: Score[];
@@ -40,6 +50,16 @@ const defaultLS: () => ILS = () => ({
     QUALITY: 'Hi',
     SFX: 'OFF',
     MUSIC: 'ON',
+    INITIAL_PLAYER: 3,
+    INITIAL_BOMB: 2,
+
+    //Ingame numbers
+    SCORE: 0,
+    POINT: 0,
+    PLAYER: 3,
+    BOMB: 2,
+    POWER: 0,
+    GRAZE: 0,
 
     NEW_SCORE: 0,
     HIGH_SCORES: [

@@ -1,4 +1,4 @@
-import { LS } from '../containers/LSContainer';
+import { LS } from '../containers/LSContext';
 
 export default class LoopingSound {
     private url: string;

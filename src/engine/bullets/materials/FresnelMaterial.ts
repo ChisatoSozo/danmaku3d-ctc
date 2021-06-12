@@ -10,6 +10,7 @@ Effect.ShadersStore.fresnelFragmentShader = glsl`
     varying vec3 vPositionW;
     varying vec3 vNormalW;
     uniform vec3 cameraPosition;
+    uniform vec3 playerPosition;
     uniform float alpha;
 
     void main() {
@@ -20,7 +21,13 @@ Effect.ShadersStore.fresnelFragmentShader = glsl`
         float fresnelTerm = dot(viewDirectionW, vNormalW);
         fresnelTerm = clamp(1. - fresnelTerm, 0., 1.0);
 
-        gl_FragColor = vec4(mix(color, toColor, fresnelTerm), 1.0);
+        color = mix(color, toColor, fresnelTerm);
+        // vec3 antiColor = vec3(1.0, 1.0, 1.0) - color;
+
+        // float dist = clamp(distance(vPositionW, playerPosition) * .5, 0., 1.);
+        // color = mix(antiColor, color, dist);
+
+        gl_FragColor = vec4(color, alpha);
     }
 `;
 

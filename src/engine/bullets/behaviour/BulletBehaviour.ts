@@ -5,6 +5,7 @@ import { BulletCache } from '../../types/BulletTypes';
 import { makeTextureFromArray, makeTextureFromBlank, makeTextureFromVectors } from '../../utils/BulletUtils';
 import { ARENA_MAX, ARENA_MIN } from '../../utils/Constants';
 import DifferentialPositionVelocityCollisionSystem from './DifferentialPositionVelocityCollisionSystem';
+import { EnemyBulletBehaviour } from './EnemyBulletBehaviour';
 
 export interface BulletBehaviourArgs {
     positionShader: string;
@@ -22,7 +23,6 @@ interface InitArgs {
     initialVelocities: Vector3[] | CustomFloatProceduralTexture;
     timings: number[];
     endTimings: number[];
-    downsampleCollisions: boolean;
     translationFromParent?: boolean;
     rotationFromParent?: boolean;
     disableWarning?: boolean;
@@ -38,7 +38,7 @@ export class BulletBehaviour {
     private collideWithEnvironment: Vector3;
     private parent: TransformNode;
     protected radius: number;
-    protected bulletValue: number;
+    public bulletValue: number;
     private initialValuesFunction?: (texture: CustomFloatProceduralTexture) => void;
     private diffSystem?: DifferentialPositionVelocityCollisionSystem;
 
@@ -82,7 +82,6 @@ export class BulletBehaviour {
         initialVelocities,
         timings,
         endTimings,
-        downsampleCollisions,
         translationFromParent = true,
         rotationFromParent = false,
         disableWarning = false,
@@ -91,6 +90,7 @@ export class BulletBehaviour {
         scene,
     }: InitArgs) {
         if (!this.collisionShader) throw new Error('Collision shader must be set by child of BulletBehaviour');
+        const downsampleCollisions = this instanceof EnemyBulletBehaviour;
 
         const num = timings.length;
         const startPositionsState =
@@ -110,8 +110,7 @@ export class BulletBehaviour {
         this.diffSystem = new DifferentialPositionVelocityCollisionSystem({
             num,
             startPositionsState,
-            //TODO: here
-            startVelocitiesState: initialVelocitiesTexture, //startVelocitiesState
+            startVelocitiesState,
             startCollisionsState,
             positionShader: this.positionShader,
             velocityShader: this.velocityShader,
@@ -120,13 +119,12 @@ export class BulletBehaviour {
             scene,
             initialValuesFunction: (texture) => {
                 texture.setTexture('initialPositionSampler', initialPositionsTexture);
-
-                //TODO: here
-                //texture.setTexture('initialVelocitySampler', initialVelocitiesTexture);
+                texture.setTexture('initialVelocitySampler', initialVelocitiesTexture);
                 texture.setTexture('timingsSampler', timingsTexture);
                 texture.setTexture('endTimingsSampler', endTimingsTexture);
                 texture.setVector3('playerPosition', globalActorRefs.player.position);
                 texture.setVector3('parentPosition', this.parent.getAbsolutePosition());
+                texture.setMatrix('parentRotation', this.parent.getWorldMatrix().getRotationMatrix());
                 texture.setFloat('translationFromParent', +translationFromParent);
                 texture.setFloat('rotationFromParent', +rotationFromParent);
                 texture.setFloat('timeSinceStart', 0.001);
@@ -137,14 +135,14 @@ export class BulletBehaviour {
         });
 
         material.setTexture('positionSampler', startPositionsState);
-        //TODO: here
-        material.setTexture('velocitySampler', initialVelocitiesTexture); //startVelocitiesState
+        material.setTexture('velocitySampler', startVelocitiesState);
         material.setTexture('collisionSampler', startCollisionsState);
         material.setTexture('timingsSampler', timingsTexture);
         material.setTexture('endTimingsSampler', endTimingsTexture);
         material.setFloat('timeSinceStart', 0.001);
         material.setFloat('radius', this.radius);
         material.setFloat('disableWarning', +disableWarning);
+        material.setVector3('playerPosition', globalActorRefs.player.position);
 
         this.material = material;
         this.ready = true;
@@ -165,6 +163,7 @@ export class BulletBehaviour {
         const updateResult = this.diffSystem.update(deltaS, (texture) => {
             if (!this.timeSinceStart) throw new Error('Time since start was not initialized when trying to update');
             texture.setVector3('parentPosition', this.parent.getAbsolutePosition());
+            texture.setMatrix('parentRotation', this.parent.getWorldMatrix().getRotationMatrix());
             texture.setFloat('timeSinceStart', this.timeSinceStart);
             texture.setVector3('playerPosition', globalActorRefs.player.position);
         });
@@ -177,7 +176,12 @@ export class BulletBehaviour {
         this.material.setTexture('velocitySampler', newVelocities);
         this.material.setTexture('collisionSampler', newCollisions);
         this.material.setFloat('timeSinceStart', this.timeSinceStart);
+        this.material.setVector3('playerPosition', globalActorRefs.player.position);
 
         return updateResult;
+    }
+    getCollisions() {
+        if (!this.diffSystem) throw new Error('diffSystem was not initialized');
+        return this.diffSystem.collisionResult.readPixelsAsync();
     }
 }

@@ -1,11 +1,12 @@
 import { Mesh, ShaderMaterial, TransformNode, Vector3 } from '@babylonjs/core';
 import { isFunction } from 'lodash';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useScene } from 'react-babylonjs';
 import { v4 as uuid } from 'uuid';
 import { makeBulletBehaviour } from '../bullets/behaviour';
 import { BulletBehaviour } from '../bullets/behaviour/BulletBehaviour';
-import { BULLET_TYPE, EnemyBulletBehaviour } from '../bullets/behaviour/EnemyBulletBehaviour';
+import { BULLET_TYPE } from '../bullets/behaviour/EnemyBulletBehaviour';
+import { PlayerBulletBehaviour } from '../bullets/behaviour/PlayerBulletBehaviour';
 import { makeEndTimings } from '../bullets/endTimings';
 import { makeBulletMaterial } from '../bullets/materials';
 import { makeBulletMesh } from '../bullets/mesh';
@@ -15,11 +16,14 @@ import { CustomFloatProceduralTexture } from '../forks/CustomFloatProceduralText
 import { useDeltaBeforeRender } from '../hooks/useDeltaBeforeRender';
 import { makeName } from '../hooks/useName';
 import { globalActorRefs } from '../RefSync';
+import { itemGet, playerDeath, playerGraze } from '../sounds/SFX';
 import { BulletCache, BulletInstruction, PreBulletInstruction, UnevalBulletInstruction } from '../types/BulletTypes';
 import { DeepPartial } from '../types/UtilTypes';
-import { MAX_BULLETS_PER_GROUP } from '../utils/Constants';
+import { convertEnemyBulletCollisions, convertPlayerBulletCollisions } from '../utils/BulletUtils';
+import { MAX_BULLETS_PER_GROUP, MAX_ENEMIES, PLAYER_INVULNERABLE_COOLDOWN } from '../utils/Constants';
 import { IAssetContext } from './AssetContext';
-import { LS } from './LSContainer';
+import { IEffectContext } from './EffectContext';
+import { LS } from './LSContext';
 
 const defaultBulletInstruction: UnevalBulletInstruction = {
     materialOptions: {
@@ -122,10 +126,12 @@ type AddBulletGroup = (
 
 interface IBulletContext {
     addBulletGroup: AddBulletGroup | undefined;
+    isDead: boolean;
 }
 
 const defaultBulletContext: () => IBulletContext = () => ({
     addBulletGroup: () => '',
+    isDead: false,
 });
 interface BulletGroup {
     behaviour: BulletBehaviour;
@@ -135,7 +141,6 @@ interface BulletGroup {
     initialVelocities: Vector3[];
     timings: number[];
     endTimings: number[];
-    downsampleCollisions: boolean;
     translationFromParent: boolean;
     rotationFromParent: boolean;
     disableWarning: boolean;
@@ -157,9 +162,14 @@ const bulletGroupDispose = (group: BulletGroup) => {
 
 export const BulletContext = React.createContext<IBulletContext>(defaultBulletContext());
 
-export const useBulletContext = (assetContext: IAssetContext, environmentCollision: Vector3) => {
+export const useBulletContext = (assetContext: IAssetContext, effects: IEffectContext, environmentCollision: Vector3) => {
     const scene = useScene();
+    const playHitSound = useRef(false);
+    const playerInvulnerable = useRef(false);
     const { assets, assetsLoaded } = assetContext;
+    const { addEffect } = effects;
+
+    const [isDead, setIsDead] = useState(false);
 
     const bulletCache = useMemo<BulletCache>(
         () => ({
@@ -230,15 +240,12 @@ export const useBulletContext = (assetContext: IAssetContext, environmentCollisi
             const rotationFromParent = preparedInstruction.behaviourOptions.rotationFromParent;
             const disableWarning = preparedInstruction.behaviourOptions.disableWarning || false;
 
-            const downsampleCollisions = behaviour instanceof EnemyBulletBehaviour;
-
             behaviour.init({
                 material,
                 initialPositions,
                 initialVelocities,
                 timings,
                 endTimings,
-                downsampleCollisions,
                 translationFromParent,
                 rotationFromParent,
                 disableWarning,
@@ -258,7 +265,6 @@ export const useBulletContext = (assetContext: IAssetContext, environmentCollisi
                 initialVelocities,
                 timings,
                 endTimings,
-                downsampleCollisions,
                 translationFromParent,
                 rotationFromParent,
                 disableWarning,
@@ -276,9 +282,73 @@ export const useBulletContext = (assetContext: IAssetContext, environmentCollisi
 
     useDeltaBeforeRender((scene, deltaS) => {
         const toRemove: string[] = [];
+        if (isDead || scene.paused) return;
 
         Object.keys(allBullets).forEach((bulletGroupIndex) => {
             const bulletGroup = allBullets[bulletGroupIndex];
+
+            //collision
+            if (bulletGroup.behaviour instanceof PlayerBulletBehaviour) {
+                bulletGroup.behaviour.getCollisions()?.then((buffer) => {
+                    const collisions = convertPlayerBulletCollisions(buffer);
+                    collisions.forEach((collision) => {
+                        if (collision.collisionID >= MAX_ENEMIES && collision.collisionID < MAX_ENEMIES * 2) {
+                            const enemyID = collision.collisionID - MAX_ENEMIES;
+                            globalActorRefs.enemies[enemyID].health -= bulletGroup.behaviour.bulletValue;
+                            playHitSound.current = true;
+                            if (globalActorRefs.enemies[enemyID]) {
+                                LS.SCORE += 10;
+                                addEffect(collision.hit, {
+                                    type: 'particles',
+                                    name: 'hit',
+                                });
+                            }
+                        }
+                    });
+                });
+            } else {
+                bulletGroup.behaviour.getCollisions()?.then((buffer) => {
+                    const collisions = convertEnemyBulletCollisions(buffer);
+                    if (collisions.length > 0) {
+                        const collision = collisions[0];
+                        if (collision.point) {
+                            LS.POINT += collision.point / 2;
+                            LS.SCORE += 50000 * (collision.point / 2);
+                            itemGet.play();
+                        }
+                        if (collision.power) {
+                            if (LS.POWER === 120) {
+                                LS.SCORE += 50000 * (collision.power / 2);
+                            } else {
+                                LS.POWER = Math.min(LS.POWER + collision.power / 2, 120);
+                            }
+                            itemGet.play();
+                        }
+                        if (collision.player) {
+                            if (!playerInvulnerable.current) {
+                                LS.PLAYER -= 1;
+                                LS.BOMB = LS.INITIAL_BOMB;
+                                playerInvulnerable.current = true;
+                                window.setTimeout(() => {
+                                    playerInvulnerable.current = false;
+                                }, PLAYER_INVULNERABLE_COOLDOWN * 1000);
+                                playerDeath.play();
+
+                                if (LS.PLAYER === 0) {
+                                    window.setTimeout(() => setIsDead(true), 300);
+                                }
+                            }
+                        }
+                        if (collision.graze) {
+                            LS.GRAZE += collision.graze / 2;
+                            LS.SCORE += 2000 * (collision.graze / 2);
+                            playerGraze.play();
+                        }
+                    }
+                });
+            }
+
+            //lifespan
             bulletGroup.timeSinceStart += deltaS;
             if (bulletGroup.timeSinceStart > bulletGroup.lifespan) {
                 toRemove.push(bulletGroupIndex);
@@ -307,5 +377,5 @@ export const useBulletContext = (assetContext: IAssetContext, environmentCollisi
         });
     });
 
-    return { addBulletGroup };
+    return { addBulletGroup, isDead };
 };

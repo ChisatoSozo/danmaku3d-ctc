@@ -65,8 +65,8 @@ export const commonVertexShaderWithWarning = glsl`
 
         vec4 totalPosition = vec4(rotatedVert.xyz + instPos.xyz, 1.0);
 
-        vPositionW = (world * totalPosition).xyz;
-        vNormalW = vec3(world * vec4(rotation * normal, 0.0));
+        vPositionW = totalPosition.xyz;
+        vNormalW = rotation * normal;
         
         gl_Position = worldViewProjection * totalPosition;
     }

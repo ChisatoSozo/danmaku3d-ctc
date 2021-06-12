@@ -2,6 +2,7 @@ import { TransformNode, Vector3 } from '@babylonjs/core';
 import React, { useRef } from 'react';
 import { keyObject } from '../containers/ControlsContext';
 import { useDeltaBeforeRender } from '../hooks/useDeltaBeforeRender';
+import { globalActorRefs } from '../RefSync';
 import { ARENA_FLOOR, ARENA_HEIGHT, ARENA_LENGTH, ARENA_WIDTH, LATERAL_SPEED } from '../utils/Constants';
 
 export const PlayerMovement: React.FC = ({ children }) => {
@@ -29,6 +30,8 @@ export const PlayerMovement: React.FC = ({ children }) => {
         if (position.x < -ARENA_WIDTH / 2) position.x = -ARENA_WIDTH / 2;
         if (position.y > ARENA_HEIGHT) position.y = ARENA_HEIGHT;
         if (position.y < ARENA_FLOOR) position.y = ARENA_FLOOR;
+
+        globalActorRefs.player = transformNodeRef.current;
     });
 
     return (

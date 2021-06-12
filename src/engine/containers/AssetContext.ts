@@ -3,8 +3,11 @@ import {
     AssetContainer,
     AssetsManager,
     ContainerAssetTask,
+    IParticleSystem,
     Mesh,
     MeshBuilder,
+    ParticleHelper,
+    ParticleSystemSet,
     Scene,
     Texture,
     TextureAssetTask,
@@ -12,8 +15,8 @@ import {
 import parsePath from 'parse-filepath';
 import React, { useEffect, useState } from 'react';
 import { useScene } from 'react-babylonjs';
-import { QualityName } from '../utils/Constants';
-import { LS } from './LSContainer';
+import { nullVector, QualityName } from '../utils/Constants';
+import { LS } from './LSContext';
 
 export interface Assets {
     containers: {
@@ -24,6 +27,9 @@ export interface Assets {
     };
     meshes: {
         [key: string]: Mesh | undefined;
+    };
+    particles: {
+        [key: string]: IParticleSystem | undefined;
     };
 }
 export interface IAssetContext {
@@ -36,6 +42,7 @@ const defaultAssetContext: () => IAssetContext = () => ({
         containers: {},
         textures: {},
         meshes: {},
+        particles: {},
     },
     assetsLoaded: false,
 });
@@ -74,6 +81,7 @@ const loadAssets = async (scene: Scene, assetPaths: string[]) => {
         const assetsManager = new AssetsManager(scene);
 
         const loadedMeshes: { [key: string]: Mesh } = {};
+        const loadedParticles: { [key: string]: IParticleSystem } = {};
 
         assetPaths.forEach((path) => {
             let assetTask: AbstractAssetTask;
@@ -100,6 +108,14 @@ const loadAssets = async (scene: Scene, assetPaths: string[]) => {
                     break;
                 case '.function':
                     loadedMeshes[name] = assetFunctions[name](scene);
+                    break;
+                case '.particles':
+                    ParticleHelper.BaseAssetsUrl = directory;
+                    ParticleSystemSet.BaseAssetsUrl = directory;
+                    ParticleHelper.CreateAsync(name, scene, false).then(function (set) {
+                        set.systems[0].emitter = nullVector;
+                        loadedParticles[name] = set.systems[0];
+                    });
                     break;
                 default:
                     reject(`Unknown asset extension ${extension}`);
@@ -136,6 +152,8 @@ const internalAssetPaths = [
     'sphere.function',
 
     `${process.env.PUBLIC_URL}/engine-assets/textures/crosshair.png`, //crosshair mesh
+
+    `${process.env.PUBLIC_URL}/engine-assets/particles/hitParticles.particles`, //hit particles
 ];
 
 export const useAssetContext = (assetPaths: string[]) => {
@@ -161,6 +179,7 @@ export const useAssetContext = (assetPaths: string[]) => {
             assets.textures = { ...internalAssets.textures, ...loadedAssets.textures };
             assets.containers = { ...internalAssets.containers, ...loadedAssets.containers };
             assets.meshes = { ...internalAssets.meshes, ...loadedAssets.meshes };
+            assets.particles = { ...internalAssets.particles, ...loadedAssets.particles };
             setAssets(assets);
             setAssetsLoaded(true);
         });

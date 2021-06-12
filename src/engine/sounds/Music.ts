@@ -1,4 +1,4 @@
-import { LS } from '../containers/LSContainer';
+import { LS } from '../containers/LSContext';
 import BGM from './BGM';
 
 class MusicClass {

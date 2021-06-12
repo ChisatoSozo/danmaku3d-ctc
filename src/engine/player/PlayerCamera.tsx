@@ -53,7 +53,7 @@ export const PlayerCamera = () => {
     }, [canvas, cameraHandler]);
 
     return (
-        <transformNode name="cameraTransform" ref={transformNodeRef} position={new Vector3(0, 5, 0)}>
+        <transformNode name="cameraTransform" ref={transformNodeRef} position={new Vector3(0, 0, 0)}>
             {texture && !xr && (
                 <transformNode name="targetTransform" position={new Vector3(0, 0, TARGET_LENGTH)}>
                     <plane

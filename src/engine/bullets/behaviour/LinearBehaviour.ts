@@ -1,7 +1,7 @@
 import { Effect } from '@babylonjs/core';
 import { MakeBehaviour } from '.';
 import { glsl } from '../../utils/BabylonUtils';
-import { collisionSnippet, mainHeaderSnippet, postVelocityComputeSnippet, uniformSnippet } from './CommonBehaviourShaders';
+import { collisionSnippet, mainHeaderSnippet, uniformSnippet } from './CommonBehaviourShaders';
 import { EnemyBulletBehaviour } from './EnemyBulletBehaviour';
 
 Effect.ShadersStore['linearBehaviourPositionPixelShader'] = glsl`
@@ -10,11 +10,11 @@ Effect.ShadersStore['linearBehaviourPositionPixelShader'] = glsl`
     void main()	{
         ${mainHeaderSnippet}
 
-        vec4 out_Position = vec4( position + (velocity * delta), 1.);
+        vec3 out_Position = position + (velocity * delta);
 
         ${collisionSnippet}
         
-        gl_FragColor = out_Position;
+        gl_FragColor = vec4(out_Position, 1.0);
     }
 `;
 
@@ -25,10 +25,9 @@ Effect.ShadersStore['linearBehaviourVelocityPixelShader'] = glsl`
 
         ${mainHeaderSnippet}
 
-        ${postVelocityComputeSnippet}
-        vec4 out_Velocity = vec4( velocity, 1.);
+        vec3 out_Velocity = velocity;
 
-        gl_FragColor = out_Velocity;
+        gl_FragColor = vec4(out_Velocity, velocityW);
     }
 `;
 

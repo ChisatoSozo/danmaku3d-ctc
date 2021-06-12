@@ -1,5 +1,6 @@
 import { Constants, RawTexture, Scene, Vector3 } from '@babylonjs/core';
 import { BulletPattern } from '../types/BulletTypes';
+import { MAX_BULLETS_PER_GROUP } from './Constants';
 import { nextPowerOfTwo } from './Utils';
 
 export const makeTextureFromVectors = (vectors: Vector3[], scene: Scene, w = 1, fill = -510) => {
@@ -112,7 +113,53 @@ export const computeSourceTextures = (pattern: BulletPattern, scene: Scene) => {
         initialVelocities: makeTextureFromVectors(pattern.positions as Vector3[], scene, 1, 0),
         timings: makeTextureFromArray(pattern.timings, scene),
         positions: makeTextureFromBlank(pattern.timings.length, scene, 1, -510, -510),
-        velocities: makeTextureFromBlank(pattern.timings.length, scene, 1, 0, 0),
+        velocities: makeTextureFromBlank(pattern.timings.length, scene, 0, 0, 0),
         collisions: makeTextureFromBlank(pattern.timings.length, scene, 0, 0), //No collisions
     };
+};
+
+export const convertPlayerBulletCollisions = (buffer: ArrayBufferView) => {
+    const collisions = [];
+
+    if (!(buffer instanceof Float32Array)) throw new Error('buffer must be Float32Array');
+
+    for (let i = 0; i < buffer.length; i += 4) {
+        const collisionID = buffer[i + 3];
+        if (collisionID !== 0) {
+            collisions.push({
+                hit: new Vector3(buffer[i], buffer[i + 1], buffer[i + 2]),
+                collisionID: collisionID,
+            });
+        }
+    }
+
+    return collisions;
+};
+
+export const convertEnemyBulletCollisions = (buffer: ArrayBufferView) => {
+    const collisions = [];
+
+    if (!(buffer instanceof Float32Array)) throw new Error('buffer must be Float32Array');
+
+    for (let i = 0; i < buffer.length; i += 4) {
+        const pointGraze = buffer[i];
+        const bombLife = buffer[i + 1];
+        const powerSpecial = buffer[i + 2];
+
+        const environmentPlayer = buffer[i + 3];
+        const player = Math.floor(environmentPlayer / MAX_BULLETS_PER_GROUP);
+        if (pointGraze || bombLife || powerSpecial || player) {
+            collisions.push({
+                player,
+                point: pointGraze % MAX_BULLETS_PER_GROUP,
+                graze: Math.floor(pointGraze / MAX_BULLETS_PER_GROUP),
+                bomb: bombLife % 1000,
+                life: Math.floor(bombLife / 1000),
+                power: powerSpecial % 1000,
+                Special: Math.floor(powerSpecial / 1000),
+            });
+        }
+    }
+
+    return collisions;
 };

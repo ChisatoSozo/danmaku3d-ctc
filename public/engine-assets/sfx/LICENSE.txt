@@ -1,7 +1,4 @@
 //TODO: license
 
 CTC:
-cancel00.wav
-ok00.wav
-select00.wav
-tan00.wav
+*.wav
