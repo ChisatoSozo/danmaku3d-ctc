@@ -1,3 +1,4 @@
+import { Effect } from '@babylonjs/core';
 import { glsl } from '../../utils/BabylonUtils';
 import { BULLET_WARNING, GRAZE_DISTANCE, MAX_BOMBS, MAX_BULLETS_PER_GROUP, MAX_ENEMIES } from '../../utils/Constants';
 
@@ -93,7 +94,7 @@ export const playerBulletCollisionPixelShader = glsl`
  *
  */
 
-export const enemyBulletCollisionPixelShader = glsl`
+Effect.ShadersStore.enemyBulletCollisionPixelShader = glsl`
     uniform float bulletRadius;
     uniform float timeSinceStart;
     uniform vec2 resolution;

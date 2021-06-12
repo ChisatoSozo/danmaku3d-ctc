@@ -109,10 +109,10 @@ export const makeTextureFromBlank = (num: number, scene: Scene, w = 1, fill = -5
 export const computeSourceTextures = (pattern: BulletPattern, scene: Scene) => {
     return {
         initialPositions: makeTextureFromVectors(pattern.positions as Vector3[], scene, 1, -510),
-        initialVelocities: makeTextureFromVectors(pattern.positions as Vector3[], scene, 1, -510),
+        initialVelocities: makeTextureFromVectors(pattern.positions as Vector3[], scene, 1, 0),
         timings: makeTextureFromArray(pattern.timings, scene),
         positions: makeTextureFromBlank(pattern.timings.length, scene, 1, -510, -510),
-        velocities: makeTextureFromBlank(pattern.timings.length, scene, 1, -510, -510),
+        velocities: makeTextureFromBlank(pattern.timings.length, scene, 1, 0, 0),
         collisions: makeTextureFromBlank(pattern.timings.length, scene, 0, 0), //No collisions
     };
 };

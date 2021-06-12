@@ -32,8 +32,8 @@ Effect.ShadersStore['linearBehaviourVelocityPixelShader'] = glsl`
     }
 `;
 
-export const makeLinearBehaviour: MakeBehaviour = (behaviourOptions, environmentCollision, assets, scene, radius, parent) => {
-    if (!behaviourOptions.bulletType) throw new Error('bulleType must be set when making an enemy bullet behaviour');
+export const makeLinearBehaviour: MakeBehaviour = (behaviourOptions, environmentCollision, radius, parent) => {
+    if (behaviourOptions.bulletType === undefined) throw new Error('bulletType must be set when making an enemy bullet behaviour');
 
     return new EnemyBulletBehaviour({
         positionShader: 'linearBehaviourPosition',

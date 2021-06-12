@@ -1,5 +1,6 @@
-import { RawTexture, Texture, Vector3 } from '@babylonjs/core';
+import { RawTexture, Vector3 } from '@babylonjs/core';
 import { BulletType } from '../bullets/behaviour/EnemyBulletBehaviour';
+import { CustomFloatProceduralTexture } from '../forks/CustomFloatProceduralTexture';
 import { RandVectorIn } from '../utils/BabylonUtils';
 import { DifficultyNumber } from '../utils/Constants';
 
@@ -40,6 +41,9 @@ export interface PatternOptions {
 
 export interface EndTimingOptions {
     timing: string;
+    times?: number[];
+    time?: number;
+    disablePrecomputation: boolean;
     uid: string;
 }
 
@@ -53,6 +57,9 @@ export interface BehaviourOptions {
     behaviour: string;
     bulletValue: number;
     bulletType?: BulletType;
+    translationFromParent: boolean;
+    rotationFromParent: boolean;
+    disableWarning: boolean;
     uid: string;
 }
 
@@ -69,6 +76,7 @@ export type BulletInstruction = {
     meshOptions: MeshOptions;
     behaviourOptions: BehaviourOptions;
     soundOptions: SoundOptions;
+    uid: string;
     lifespan: number;
 };
 
@@ -79,6 +87,7 @@ export interface UnevalBulletInstruction {
     meshOptions: DeepTypeOrFunc<MeshOptions>;
     behaviourOptions: DeepTypeOrFunc<BehaviourOptions>;
     soundOptions: DeepTypeOrFunc<SoundOptions>;
+    uid: string;
     lifespan: TypeOrFunc<number>;
 }
 
@@ -93,7 +102,7 @@ export type PreBulletInstruction = TypeOrFunc<{
 }>;
 
 export interface BulletPattern {
-    positions: Vector3[] | Texture;
+    positions: Vector3[] | CustomFloatProceduralTexture;
     velocities: Vector3[];
     timings: number[];
     uid: string;
@@ -113,5 +122,8 @@ export interface BulletCache {
     };
     patterns: {
         [uid: string]: BulletPattern;
+    };
+    endTimings: {
+        [uid: string]: number[];
     };
 }

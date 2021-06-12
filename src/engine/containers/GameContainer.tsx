@@ -1,3 +1,4 @@
+import { Vector3 } from '@babylonjs/core';
 import React from 'react';
 import { useResolveFloatTextureReadPixels } from '../hooks/useResolveFloatTextureReadPixels';
 import { AssetContext, useAssetContext } from './AssetContext';
@@ -11,9 +12,11 @@ interface GameContainerProps {
     xrEnabled: boolean;
 }
 
+const environmentCollision = new Vector3(1, 0, 0);
+
 export const GameContainer: React.FC<GameContainerProps> = ({ children, assetPaths, xrEnabled }) => {
     const assets = useAssetContext(assetPaths);
-    const bullets = useBulletContext();
+    const bullets = useBulletContext(assets, environmentCollision);
     const controls = useControlsContext(false);
     const xr = useXRContext(xrEnabled);
     useLS();

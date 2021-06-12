@@ -1,9 +1,31 @@
-import { Constants, Scene, Texture, Vector2 } from '@babylonjs/core';
+import { Constants, Effect, Scene, Texture, Vector2 } from '@babylonjs/core';
 import { times } from 'lodash';
 import { v4 } from 'uuid';
 import { CustomFloatProceduralTexture } from '../../forks/CustomFloatProceduralTexture';
 import { makeName } from '../../hooks/useName';
+import { glsl } from '../../utils/BabylonUtils';
 import { nextPowerOfTwo } from '../../utils/Utils';
+
+Effect.ShadersStore.addReducerPixelShader = glsl`
+    uniform sampler2D source;
+    uniform vec2 sourceResolution;
+
+    void main() {
+        vec2 offset = ((gl_FragCoord.xy - vec2(0.5, 0.5)) * 2.) + vec2(0.5, 0.5);
+
+        vec4 outValue = vec4(0., 0., 0., 0.);
+
+        for(float i = 0.; i < 2.; i++){
+            for(float j = 0.; j < 2.; j++){
+                vec2 curPixel = offset + vec2(i, j);
+                vec2 uv = curPixel / sourceResolution;
+                outValue += texture2D( source, uv );
+            }
+        }
+        
+        gl_FragColor = outValue;
+    }
+`;
 
 const makeProceduralTexture = (name: string, shader: string, WIDTH: number, scene: Scene) => {
     const proceduralTexture = new CustomFloatProceduralTexture(

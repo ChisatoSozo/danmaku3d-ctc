@@ -19,20 +19,20 @@ const patternMap: {
 
 type MakeBulletPattern = (
     patternOptions: PatternOptions,
-    cache: BulletCache,
+    bulletCache: BulletCache,
     scene: Scene,
-    firstCompute?: boolean,
+    supressNotPrecomputedWarning?: boolean,
 ) => BulletPattern;
 
-export const makeBulletPattern: MakeBulletPattern = (patternOptions, cache, scene, firstCompute = false) => {
+export const makeBulletPattern: MakeBulletPattern = (patternOptions, bulletCache, scene, supressNotPrecomputedWarning = false) => {
     const uid = patternOptions.uid;
-    const precomputedBulletPattern = cache.patterns[patternOptions.uid];
+    const precomputedBulletPattern = bulletCache.patterns[patternOptions.uid];
     if (precomputedBulletPattern) {
         return precomputedBulletPattern;
     }
 
-    if (!patternOptions.disablePrecomputation && !firstCompute) {
-        console.warn("Bullet pattern wasn't precomputed, this is gonna take a while", patternOptions.pattern);
+    if (!patternOptions.disablePrecomputation && !supressNotPrecomputedWarning) {
+        console.warn("Bullet pattern wasn't precomputed, this is gonna take a while", uid, patternOptions.pattern);
     }
 
     const functionName = 'make' + capFirst(patternOptions.pattern) + 'Pattern';
@@ -82,8 +82,8 @@ export const makeBulletPattern: MakeBulletPattern = (patternOptions, cache, scen
     const computedPattern = pattern as BulletPattern;
 
     if (!precomputedBulletPattern && !patternOptions.disablePrecomputation) {
-        cache.patterns[uid] = computedPattern;
-        cache.textureCache[uid] = computeSourceTextures(computedPattern, scene);
+        bulletCache.patterns[uid] = computedPattern;
+        bulletCache.textureCache[uid] = computeSourceTextures(computedPattern, scene);
     }
 
     computedPattern.uid = uid;

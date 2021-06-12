@@ -17,7 +17,7 @@ export interface BulletBehaviourArgs {
 }
 
 interface InitArgs {
-    bulletMaterial: ShaderMaterial;
+    material: ShaderMaterial;
     initialPositions: Vector3[] | CustomFloatProceduralTexture;
     initialVelocities: Vector3[] | CustomFloatProceduralTexture;
     timings: number[];
@@ -27,7 +27,7 @@ interface InitArgs {
     rotationFromParent?: boolean;
     disableWarning?: boolean;
     uid: string;
-    cache: BulletCache;
+    bulletCache: BulletCache;
     scene: Scene;
 }
 
@@ -42,7 +42,7 @@ export class BulletBehaviour {
     private initialValuesFunction?: (texture: CustomFloatProceduralTexture) => void;
     private diffSystem?: DifferentialPositionVelocityCollisionSystem;
 
-    private bulletMaterial?: ShaderMaterial;
+    private material?: ShaderMaterial;
     private ready: boolean;
     private timeSinceStart?: number;
 
@@ -77,7 +77,7 @@ export class BulletBehaviour {
     }
 
     init({
-        bulletMaterial,
+        material,
         initialPositions,
         initialVelocities,
         timings,
@@ -87,30 +87,31 @@ export class BulletBehaviour {
         rotationFromParent = false,
         disableWarning = false,
         uid,
-        cache,
+        bulletCache,
         scene,
     }: InitArgs) {
         if (!this.collisionShader) throw new Error('Collision shader must be set by child of BulletBehaviour');
 
         const num = timings.length;
         const startPositionsState =
-            cache.textureCache[uid]?.positions || makeTextureFromBlank(timings.length, scene, 1, -510, -510); //All positions are invalid until enter time
-        const startCollisionsState = cache.textureCache[uid]?.collisions || makeTextureFromBlank(timings.length, scene, 0, 0); //No collisions
-        const startVelocitiesState = cache.textureCache[uid]?.velocities || makeTextureFromBlank(timings.length, scene, 0, 0);
+            bulletCache.textureCache[uid]?.positions || makeTextureFromBlank(timings.length, scene, 1, -510, -510); //All positions are invalid until enter time
+        const startCollisionsState = bulletCache.textureCache[uid]?.collisions || makeTextureFromBlank(timings.length, scene, 0, 0); //No collisions
+        const startVelocitiesState = bulletCache.textureCache[uid]?.velocities || makeTextureFromBlank(timings.length, scene, 0, 0);
 
         const initialPositionsTexture =
-            cache.textureCache[uid]?.initialPositions ||
+            bulletCache.textureCache[uid]?.initialPositions ||
             (initialPositions instanceof Texture ? initialPositions : makeTextureFromVectors(initialPositions, scene, 1, -510));
         const initialVelocitiesTexture =
-            cache.textureCache[uid]?.initialVelocities ||
-            (initialVelocities instanceof Texture ? initialVelocities : makeTextureFromVectors(initialVelocities, scene, 1, -510));
-        const timingsTexture = cache.textureCache[uid]?.timings || makeTextureFromArray(timings, scene);
-        const endTimingsTexture = cache.textureCache[uid]?.endTimings || makeTextureFromArray(endTimings, scene);
+            bulletCache.textureCache[uid]?.initialVelocities ||
+            (initialVelocities instanceof Texture ? initialVelocities : makeTextureFromVectors(initialVelocities, scene, 1, 0));
+        const timingsTexture = bulletCache.textureCache[uid]?.timings || makeTextureFromArray(timings, scene);
+        const endTimingsTexture = bulletCache.textureCache[uid]?.endTimings || makeTextureFromArray(endTimings, scene);
 
         this.diffSystem = new DifferentialPositionVelocityCollisionSystem({
             num,
             startPositionsState,
-            startVelocitiesState,
+            //TODO: here
+            startVelocitiesState: initialVelocitiesTexture, //startVelocitiesState
             startCollisionsState,
             positionShader: this.positionShader,
             velocityShader: this.velocityShader,
@@ -135,17 +136,17 @@ export class BulletBehaviour {
             initialCollisionValuesFunction: this.bindCollisionVars,
         });
 
-        bulletMaterial.setTexture('positionSampler', startPositionsState);
+        material.setTexture('positionSampler', startPositionsState);
         //TODO: here
-        bulletMaterial.setTexture('velocitySampler', initialVelocitiesTexture); //startVelocitiesState
-        bulletMaterial.setTexture('collisionSampler', startCollisionsState);
-        bulletMaterial.setTexture('timingsSampler', timingsTexture);
-        bulletMaterial.setTexture('endTimingsSampler', endTimingsTexture);
-        bulletMaterial.setFloat('timeSinceStart', 0.001);
-        bulletMaterial.setFloat('radius', this.radius);
-        bulletMaterial.setFloat('disableWarning', +disableWarning);
+        material.setTexture('velocitySampler', initialVelocitiesTexture); //startVelocitiesState
+        material.setTexture('collisionSampler', startCollisionsState);
+        material.setTexture('timingsSampler', timingsTexture);
+        material.setTexture('endTimingsSampler', endTimingsTexture);
+        material.setFloat('timeSinceStart', 0.001);
+        material.setFloat('radius', this.radius);
+        material.setFloat('disableWarning', +disableWarning);
 
-        this.bulletMaterial = bulletMaterial;
+        this.material = material;
         this.ready = true;
         this.timeSinceStart = 0.001;
     }
@@ -155,7 +156,7 @@ export class BulletBehaviour {
         this.ready = false;
     }
     update(deltaS: number) {
-        if (!this.ready || !this.diffSystem || !this.timeSinceStart || !this.bulletMaterial) {
+        if (!this.ready || !this.diffSystem || !this.timeSinceStart || !this.material) {
             return false;
         }
 
@@ -172,10 +173,10 @@ export class BulletBehaviour {
 
         const [newPositions, newVelocities, newCollisions] = updateResult;
 
-        this.bulletMaterial.setTexture('positionSampler', newPositions);
-        this.bulletMaterial.setTexture('velocitySampler', newVelocities);
-        this.bulletMaterial.setTexture('collisionSampler', newCollisions);
-        this.bulletMaterial.setFloat('timeSinceStart', this.timeSinceStart);
+        this.material.setTexture('positionSampler', newPositions);
+        this.material.setTexture('velocitySampler', newVelocities);
+        this.material.setTexture('collisionSampler', newCollisions);
+        this.material.setFloat('timeSinceStart', this.timeSinceStart);
 
         return updateResult;
     }

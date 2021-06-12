@@ -1,6 +1,5 @@
 import { AnimationGroup, Node, Skeleton } from '@babylonjs/core';
-import { useContext } from 'react';
-import { AssetContext } from '../containers/AssetContext';
+import { useAssets } from './useAssets';
 
 interface Model {
     mesh: Node;
@@ -9,7 +8,7 @@ interface Model {
 }
 type useModelType = (modelName: string, extractChild?: boolean) => Model | undefined;
 export const useModel: useModelType = (modelName, extractChild = false) => {
-    const assets = useContext(AssetContext);
+    const assets = useAssets();
     if (modelName in assets.containers) {
         const container = assets.containers[modelName];
         if (!container) return;

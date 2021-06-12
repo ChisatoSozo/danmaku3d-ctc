@@ -1,5 +1,5 @@
-import { Material, Scene } from '@babylonjs/core';
-import { IAssetContext } from '../../containers/AssetContext';
+import { Scene, ShaderMaterial } from '@babylonjs/core';
+import { Assets } from '../../containers/AssetContext';
 import { MaterialOptions } from '../../types/BulletTypes';
 import { capFirst } from '../../utils/Utils';
 import { makeFresnelMaterial } from './FresnelMaterial';
@@ -10,7 +10,7 @@ const materialMap: {
     makeFresnelMaterial,
 };
 
-export type MakeMaterial = (materialOptions: MaterialOptions, assets: IAssetContext, scene: Scene) => Material;
+export type MakeMaterial = (materialOptions: MaterialOptions, assets: Assets, scene: Scene) => ShaderMaterial;
 
 export const makeBulletMaterial: MakeMaterial = (materialOptions, assets, scene) => {
     const functionName = 'make' + capFirst(materialOptions.material) + 'Material';

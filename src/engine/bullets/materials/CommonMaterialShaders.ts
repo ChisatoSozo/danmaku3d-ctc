@@ -7,21 +7,23 @@ export const commonVertexShaderWithWarning = glsl`
     attribute vec3 position;
     attribute vec3 normal;
     attribute vec2 uv;
+    uniform mat4 worldViewProjection;
+    varying vec3 vPositionW;
+    varying vec3 vNormalW;
+    varying vec2 vUV;
 
-    uniform mat4 view;
-    uniform mat4 projection;
     uniform sampler2D positionSampler;
     uniform sampler2D velocitySampler;
     uniform sampler2D timingsSampler;
     uniform sampler2D endTimingsSampler;
+
     uniform float timeSinceStart;
     uniform float disableWarning;
     uniform float radius;
 
-    varying vec3 vPositionW;
-    varying vec3 vNormalW;
-    varying vec2 vUV;
     varying float dTiming;
+
+    #include<helperFunctions>
 
     void makeRotation(in vec3 direction, out mat3 rotation)
     {
@@ -35,8 +37,6 @@ export const commonVertexShaderWithWarning = glsl`
     }
 
     void main() {
-        vUV = uv;
-
         int instance = gl_InstanceID;
         int width = textureSize(positionSampler, 0).x;
         int x = instance % width;
@@ -63,16 +63,11 @@ export const commonVertexShaderWithWarning = glsl`
         rotatedVert *= (1. - hasEnded);
         rotatedVert *= radius;
 
-        vec4 totalPos = rotatedVert + instPos;
-        totalPos.w = 1.;
+        vec4 totalPosition = vec4(rotatedVert.xyz + instPos.xyz, 1.0);
 
-        mat4 world = mat4(world0, world1, world2, world3);
-        mat4 worldView = view * world;
-
-        vec4 modelViewPosition = worldView * totalPos;
-        gl_Position = projection * modelViewPosition;
-
-        vPositionW = vec3( world * totalPos ) ;
+        vPositionW = (world * totalPosition).xyz;
         vNormalW = vec3(world * vec4(rotation * normal, 0.0));
+        
+        gl_Position = worldViewProjection * totalPosition;
     }
 `;

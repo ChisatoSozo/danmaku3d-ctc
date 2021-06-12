@@ -4,7 +4,7 @@ import * as SFX from '../../sounds/SFX';
 import { SoundOptions } from '../../types/BulletTypes';
 import { filterInPlace } from '../../utils/Utils';
 
-class EnemySound {
+export class EnemySound {
     private soundObj: MultiSound | LoopingSound;
     private reducedTimings: number[];
     private timeSinceStart: number;

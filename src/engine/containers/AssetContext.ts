@@ -15,7 +15,7 @@ import { useScene } from 'react-babylonjs';
 import { QualityName } from '../utils/Constants';
 import { LS } from './LSContainer';
 
-export interface IAssetContext {
+export interface Assets {
     containers: {
         [key: string]: AssetContainer | undefined;
     };
@@ -26,11 +26,18 @@ export interface IAssetContext {
         [key: string]: Mesh | undefined;
     };
 }
+export interface IAssetContext {
+    assets: Assets;
+    assetsLoaded: boolean;
+}
 
 const defaultAssetContext: () => IAssetContext = () => ({
-    containers: {},
-    textures: {},
-    meshes: {},
+    assets: {
+        containers: {},
+        textures: {},
+        meshes: {},
+    },
+    assetsLoaded: false,
 });
 
 export const AssetContext = React.createContext<IAssetContext>(defaultAssetContext());
@@ -63,7 +70,7 @@ const assetFunctions: { [key: string]: (scene: Scene) => Mesh } = {
 };
 
 const loadAssets = async (scene: Scene, assetPaths: string[]) => {
-    return new Promise<IAssetContext>((resolve, reject) => {
+    return new Promise<Assets>((resolve, reject) => {
         const assetsManager = new AssetsManager(scene);
 
         const loadedMeshes: { [key: string]: Mesh } = {};
@@ -100,7 +107,7 @@ const loadAssets = async (scene: Scene, assetPaths: string[]) => {
         });
 
         assetsManager.onFinish = (tasks) => {
-            const assets = defaultAssetContext();
+            const assets = defaultAssetContext().assets;
 
             tasks.forEach((task) => {
                 if (task instanceof TextureAssetTask) {
@@ -125,12 +132,18 @@ const loadAssets = async (scene: Scene, assetPaths: string[]) => {
     });
 };
 
-const internalAssetPaths = [`${process.env.PUBLIC_URL}/engine-assets/textures/crosshair.png`];
+const internalAssetPaths = [
+    'sphere.function',
+
+    `${process.env.PUBLIC_URL}/engine-assets/textures/crosshair.png`, //crosshair mesh
+];
 
 export const useAssetContext = (assetPaths: string[]) => {
     const scene = useScene();
-    const [internalAssets, setInternalAssets] = useState<IAssetContext>();
-    const [assets, setAssets] = useState<IAssetContext>(defaultAssetContext());
+    const [internalAssets, setInternalAssets] = useState<Assets>();
+    const [assets, setAssets] = useState<Assets>(defaultAssetContext().assets);
+
+    const [assetsLoaded, setAssetsLoaded] = useState(false);
 
     useEffect(() => {
         if (!scene) return;
@@ -140,15 +153,18 @@ export const useAssetContext = (assetPaths: string[]) => {
     }, [scene]);
 
     useEffect(() => {
+        setAssetsLoaded(false);
         if (!scene) return;
         if (!internalAssets) return;
         loadAssets(scene, assetPaths).then((loadedAssets) => {
-            const assets = defaultAssetContext();
+            const assets = defaultAssetContext().assets;
             assets.textures = { ...internalAssets.textures, ...loadedAssets.textures };
             assets.containers = { ...internalAssets.containers, ...loadedAssets.containers };
+            assets.meshes = { ...internalAssets.meshes, ...loadedAssets.meshes };
             setAssets(assets);
+            setAssetsLoaded(true);
         });
     }, [assetPaths, internalAssets, scene]);
 
-    return assets;
+    return { assetsLoaded, assets };
 };

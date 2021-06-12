@@ -12,9 +12,9 @@ class MusicClass {
     constructor() {
         this.didInit = false;
         this.BGMs = {};
-        this.BGMs.menuTheme = new BGM('/music/titleTheme.mp3', 0.3);
-        this.BGMs.stage1Theme = new BGM('/music/stage1.mp3', 0.3);
-        this.BGMs.wriggleTheme = new BGM('/music/wriggleTheme.mp3', 0.3);
+        // this.BGMs.menuTheme = new BGM('/music/titleTheme.mp3', 0.3);
+        // this.BGMs.stage1Theme = new BGM('/music/stage1.mp3', 0.3);
+        // this.BGMs.wriggleTheme = new BGM('/music/wriggleTheme.mp3', 0.3);
         this.startedAt = 0;
         this.pausedAt = 0;
         this.activeSound = null;

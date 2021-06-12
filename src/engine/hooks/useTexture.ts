@@ -1,9 +1,8 @@
 import { Texture } from '@babylonjs/core';
-import { useContext } from 'react';
-import { AssetContext } from '../containers/AssetContext';
+import { useAssets } from './useAssets';
 
 export const useTexture: (textureName: string) => Texture | undefined = (textureName: string) => {
-    const assets = useContext(AssetContext);
+    const assets = useAssets();
     if (textureName in assets.textures) {
         return assets.textures[textureName];
     }

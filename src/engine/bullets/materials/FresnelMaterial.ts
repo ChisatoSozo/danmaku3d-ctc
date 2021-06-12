@@ -4,8 +4,8 @@ import { MakeMaterial } from '.';
 import { glsl } from '../../utils/BabylonUtils';
 import { commonVertexShaderWithWarning } from './CommonMaterialShaders';
 
-export const fresnelVertexShader = commonVertexShaderWithWarning;
-export const fresnelFragmentShader = glsl`
+Effect.ShadersStore.fresnelVertexShader = commonVertexShaderWithWarning;
+Effect.ShadersStore.fresnelFragmentShader = glsl`
     uniform vec3 toColor;
     varying vec3 vPositionW;
     varying vec3 vNormalW;
@@ -20,12 +20,9 @@ export const fresnelFragmentShader = glsl`
         float fresnelTerm = dot(viewDirectionW, vNormalW);
         fresnelTerm = clamp(1. - fresnelTerm, 0., 1.0);
 
-        gl_FragColor = vec4(mix(color, toColor, fresnelTerm), alpha);
+        gl_FragColor = vec4(mix(color, toColor, fresnelTerm), 1.0);
     }
 `;
-
-Effect.ShadersStore['fresnelVertexShader'] = fresnelVertexShader;
-Effect.ShadersStore['fresnelFragmentShader'] = fresnelFragmentShader;
 
 export const makeFresnelMaterial: MakeMaterial = (materialOptions, assets, scene) => {
     const material = new ShaderMaterial(

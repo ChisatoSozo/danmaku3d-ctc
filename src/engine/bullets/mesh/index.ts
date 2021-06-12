@@ -1,5 +1,5 @@
 import { Mesh, Scene } from '@babylonjs/core';
-import { IAssetContext } from '../../containers/AssetContext';
+import { Assets } from '../../containers/AssetContext';
 import { MeshOptions } from '../../types/BulletTypes';
 import { capFirst } from '../../utils/Utils';
 import { makeSphereMesh } from './Sphere';
@@ -10,7 +10,7 @@ const meshMap: {
     makeSphereMesh,
 };
 
-export type MakeMesh = (meshOptions: MeshOptions, assets: IAssetContext, scene: Scene) => Mesh;
+export type MakeMesh = (meshOptions: MeshOptions, assets: Assets, scene: Scene) => Mesh;
 
 export const makeBulletMesh: MakeMesh = (meshOptions, assets, scene) => {
     const functionName = 'make' + capFirst(meshOptions.mesh) + 'Mesh';

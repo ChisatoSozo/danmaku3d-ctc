@@ -5,5 +5,6 @@ export const makeSphereMesh: MakeMesh = (meshOptions, assets) => {
     if (!_sphere) throw new Error('Sphere mesh not loaded');
 
     const sphere = _sphere.clone().makeGeometryUnique();
+    sphere.isVisible = true;
     return sphere;
 };
