@@ -17,5 +17,5 @@ export const Mesh: React.FC<TransformNodeProps & MeshProps> = ({ modelName, ...p
         model.mesh.parent = transformNodeRef.current;
     }, [model]);
 
-    return <transformNode {...props} />;
+    return <transformNode ref={transformNodeRef} {...props} />;
 };

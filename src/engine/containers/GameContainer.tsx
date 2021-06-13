@@ -20,7 +20,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({ children, assetPat
     const glow = useGlowContext();
     const assets = useAssetContext(assetPaths);
     const effects = useEffectContext(assets.assets);
-    const bullets = useBulletContext(assets, effects, environmentCollision);
+    const bullets = useBulletContext(assets, effects, glow.glowLayer, environmentCollision);
     const controls = useControlsContext(false);
     const xr = useXRContext(xrEnabled);
 

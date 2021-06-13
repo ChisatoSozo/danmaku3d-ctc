@@ -150,8 +150,10 @@ const loadAssets = async (scene: Scene, assetPaths: string[]) => {
 
 const internalAssetPaths = [
     'sphere.function',
+    `${process.env.PUBLIC_URL}/engine-assets/bullets/laser.glb`, //laser
+    `${process.env.PUBLIC_URL}/engine-assets/bullets/test.glb`, //test
 
-    `${process.env.PUBLIC_URL}/engine-assets/textures/crosshair.png`, //crosshair mesh
+    `${process.env.PUBLIC_URL}/engine-assets/textures/crosshair.png`, //crosshair texture
 
     `${process.env.PUBLIC_URL}/engine-assets/particles/hitParticles.particles`, //hit particles
 ];

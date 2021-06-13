@@ -14,7 +14,7 @@ export const BULLET_TYPE: { [key: string]: BulletType } = {
 
 export type BulletType = 0 | 1 | 2 | 3 | 4 | 5;
 
-interface EnemyBulletBehaviourArgs extends BulletBehaviourArgs {
+export interface EnemyBulletBehaviourArgs extends BulletBehaviourArgs {
     bulletType: BulletType;
 }
 

@@ -2,12 +2,14 @@ import { Mesh, Scene } from '@babylonjs/core';
 import { Assets } from '../../containers/AssetContext';
 import { MeshOptions } from '../../types/BulletTypes';
 import { capFirst } from '../../utils/Utils';
-import { makeSphereMesh } from './Sphere';
+import { makeLaserMesh } from './LaserMesh';
+import { makeSphereMesh } from './SphereMesh';
 
 const meshMap: {
     [meshName: string]: MakeMesh;
 } = {
     makeSphereMesh,
+    makeLaserMesh,
 };
 
 export type MakeMesh = (meshOptions: MeshOptions, assets: Assets, scene: Scene) => Mesh;

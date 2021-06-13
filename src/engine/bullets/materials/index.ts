@@ -3,11 +3,13 @@ import { Assets } from '../../containers/AssetContext';
 import { MaterialOptions } from '../../types/BulletTypes';
 import { capFirst } from '../../utils/Utils';
 import { makeFresnelMaterial } from './FresnelMaterial';
+import { makeLaserMaterial } from './LaserMaterial';
 
 const materialMap: {
     [materialName: string]: MakeMaterial;
 } = {
     makeFresnelMaterial,
+    makeLaserMaterial,
 };
 
 export type MakeMaterial = (materialOptions: MaterialOptions, assets: Assets, scene: Scene) => ShaderMaterial;

@@ -24,6 +24,9 @@ export const PLAYER_BOMB_DURATION = 8;
 export const TARGET_LENGTH = 15;
 
 export const BULLET_WARNING = 0.2;
+export const LASER_WARNING = 1.0;
+
+export const LASER_LENGTH = 10.0;
 
 export type DifficultyName = 'Easy' | 'Normal' | 'Hard' | 'Lunatic';
 export type DifficultyNumber = 1 | 2 | 3 | 4;

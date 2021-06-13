@@ -17,7 +17,7 @@ export interface BulletBehaviourArgs {
     bulletValue?: number;
 }
 
-interface InitArgs {
+export interface InitArgs {
     material: ShaderMaterial;
     initialPositions: Vector3[] | CustomFloatProceduralTexture;
     initialVelocities: Vector3[] | CustomFloatProceduralTexture;

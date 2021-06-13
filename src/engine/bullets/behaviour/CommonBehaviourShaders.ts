@@ -1,6 +1,6 @@
 import { Effect } from '@babylonjs/core';
 import { glsl } from '../../utils/BabylonUtils';
-import { BULLET_WARNING, GRAZE_DISTANCE, MAX_BOMBS, MAX_BULLETS_PER_GROUP, MAX_ENEMIES } from '../../utils/Constants';
+import { GRAZE_DISTANCE, MAX_BOMBS, MAX_BULLETS_PER_GROUP, MAX_ENEMIES } from '../../utils/Constants';
 
 export const uniformSnippet = glsl`
     uniform float delta;
@@ -40,15 +40,13 @@ export const mainHeaderSnippet = glsl`
     initialVelocity = initialVelocity * parentRotationMatrix;
 
     float dTiming = timeSinceStart - timing;
-    float shouldPositionReset = float(dTiming > 0. && dTiming < ${BULLET_WARNING}) * float(parentPosition != vec3(0.,0.,0.));
-    float shouldVelocityReset = float(dTiming > 0.) * (1. - currentVelocity.w);
+    float shouldAssignInitialStates = float(dTiming > 0.) * (1. - currentVelocity.w);
 
-    position = mix(position, initialPosition, shouldPositionReset);
-    currentVelocity = mix(currentVelocity, initialVelocity, shouldVelocityReset);
+    position = mix(position, initialPosition, shouldAssignInitialStates);
+    currentVelocity = mix(currentVelocity, initialVelocity, shouldAssignInitialStates);
 
     vec3 velocity = currentVelocity.xyz;
     float velocityW = currentVelocity.w;
-
 
     vec3 startPosition = position;
     vec3 startVelocity = velocity;
@@ -188,13 +186,11 @@ Effect.ShadersStore.enemyLaserCollisionPixelShader = glsl`
     uniform vec3 playerPosition;
     uniform vec3 arenaMin;
     uniform vec3 arenaMax;
-
     float distSquared( vec3 A, vec3 B )
     {
         vec3 C = A - B;
         return dot( C, C );
     }
-
     float minimum_distance(vec3 v, vec3 w, vec3 p) {
         // Return minimum distance between line segment vw and point p
         float l2 = max(distSquared(v, w), 0.01);  // i.e. |w-v|^2 -  avoid a sqrt
@@ -206,27 +202,23 @@ Effect.ShadersStore.enemyLaserCollisionPixelShader = glsl`
         vec3 projection = v + t * (w - v);  // Projection falls on the segment
         return distance(p, projection);
     }
-
     void main(){
         vec2 uv = gl_FragCoord.xy / resolution;
         vec3 position = texture2D( positionSampler, uv ).xyz;
         vec4 timingPosition = texture2D( timingsSampler, uv);
         vec4 endTimingPosition = texture2D( endTimingsSampler, uv );
-
         //Bullet colliding with floor?
         float collidingWithEnvironment = collideWithEnvironment.x * float(position.y < arenaMin.y);
         //Bullet colliding with walls?
         collidingWithEnvironment = max(collidingWithEnvironment, collideWithEnvironment.y * float(position.x < arenaMin.x || position.x > arenaMax.x));
         //Bullet colliding with ceiling?
         collidingWithEnvironment = max(collidingWithEnvironment, collideWithEnvironment.z * float(position.y > arenaMax.y));
-
         float isBullet = bulletTypePack1.x;
         float isLife = bulletTypePack1.y;
         float isBomb = bulletTypePack1.z;
         float isPower = bulletTypePack2.x;
         float isPoint = bulletTypePack2.y;
         float isSpecial = bulletTypePack2.z;
-
         for(int i = 0; i < ${MAX_BOMBS}; i ++){
             int offset = i * 3;
             vec3 bombPosition = vec3(bombPositions[offset], bombPositions[offset + 1], bombPositions[offset + 2]);
@@ -234,27 +226,21 @@ Effect.ShadersStore.enemyLaserCollisionPixelShader = glsl`
             float close = isBullet * float(bombBulletDistance < bombRadii[i]);
             collidingWithEnvironment = max(collidingWithEnvironment, close);
         }
-
         float graze = (bulletRadius + ${GRAZE_DISTANCE}) - distance(playerPosition, position);
         float isGraze = float(graze > 0.);
         float collidingWithPlayer = float(distance(playerPosition, position) < (bulletRadius));
-
         float w = collidingWithPlayer + collidingWithEnvironment + isBullet * ${MAX_BULLETS_PER_GROUP}. * collidingWithPlayer;
         float x = isPoint * collidingWithPlayer + ${MAX_BULLETS_PER_GROUP}. * isBullet * isGraze;
         float y = isBomb * collidingWithPlayer + 1000. * isLife * collidingWithPlayer;
         float z = isPower * collidingWithPlayer + 1000. * isSpecial * collidingWithPlayer;
-
         vec4 collision = vec4(x, y, z, w);
-
         //Bullet exists in scene?
         collision = collision * float(position.y > -500.);
-
         //Bullet hasn't gone past it's end timing
         float timing = timingPosition.w;
         float dTiming = timeSinceStart - timing;
         float hasEnded = float(dTiming > endTimingPosition.w);
         collision = collision * (1. - hasEnded);
-
         gl_FragColor = collision;
     }
 `;

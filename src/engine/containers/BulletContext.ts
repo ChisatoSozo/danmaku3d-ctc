@@ -1,4 +1,4 @@
-import { Mesh, ShaderMaterial, TransformNode, Vector3 } from '@babylonjs/core';
+import { GlowLayer, Mesh, ShaderMaterial, TransformNode, Vector3 } from '@babylonjs/core';
 import { isFunction } from 'lodash';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useScene } from 'react-babylonjs';
@@ -6,6 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { makeBulletBehaviour } from '../bullets/behaviour';
 import { BulletBehaviour } from '../bullets/behaviour/BulletBehaviour';
 import { BULLET_TYPE } from '../bullets/behaviour/EnemyBulletBehaviour';
+import { EnemyLaserBehaviour } from '../bullets/behaviour/EnemyLaserBehaviour';
 import { PlayerBulletBehaviour } from '../bullets/behaviour/PlayerBulletBehaviour';
 import { makeEndTimings } from '../bullets/endTimings';
 import { makeBulletMaterial } from '../bullets/materials';
@@ -30,6 +31,7 @@ const defaultBulletInstruction: UnevalBulletInstruction = {
         material: 'fresnel',
         color: [1, 0, 0],
         doubleSided: false,
+        uid: '',
     },
     patternOptions: {
         pattern: 'burst',
@@ -37,14 +39,17 @@ const defaultBulletInstruction: UnevalBulletInstruction = {
         speed: 1,
         radius: 1,
         disablePrecomputation: false,
+        uid: '',
     },
     endTimingOptions: {
         timing: 'lifespan',
         disablePrecomputation: false,
+        uid: '',
     },
     meshOptions: {
         mesh: 'sphere',
         radius: 1,
+        uid: '',
     },
     behaviourOptions: {
         behaviour: 'linear',
@@ -53,10 +58,12 @@ const defaultBulletInstruction: UnevalBulletInstruction = {
         translationFromParent: true,
         rotationFromParent: false,
         disableWarning: false,
+        uid: '',
     },
     soundOptions: {
         mute: false,
         sound: 'enemyShoot',
+        uid: '',
     },
     uid: '',
     lifespan: 10,
@@ -144,6 +151,7 @@ interface BulletGroup {
     translationFromParent: boolean;
     rotationFromParent: boolean;
     disableWarning: boolean;
+    glow: boolean | undefined;
     instruction: BulletInstruction;
 
     lifespan: number;
@@ -154,7 +162,10 @@ interface BulletGroupMap {
     [key: string]: BulletGroup;
 }
 
-const bulletGroupDispose = (group: BulletGroup) => {
+const bulletGroupDispose = (group: BulletGroup, glowLayer: GlowLayer) => {
+    if (group.glow) {
+        glowLayer.unReferenceMeshFromUsingItsOwnMaterial(group.mesh);
+    }
     group.material.dispose();
     group.behaviour.dispose();
     group.mesh.dispose();
@@ -162,7 +173,12 @@ const bulletGroupDispose = (group: BulletGroup) => {
 
 export const BulletContext = React.createContext<IBulletContext>(defaultBulletContext());
 
-export const useBulletContext = (assetContext: IAssetContext, effects: IEffectContext, environmentCollision: Vector3) => {
+export const useBulletContext = (
+    assetContext: IAssetContext,
+    effects: IEffectContext,
+    glowLayer: GlowLayer,
+    environmentCollision: Vector3,
+) => {
     const scene = useScene();
     const playHitSound = useRef(false);
     const playerInvulnerable = useRef(false);
@@ -185,11 +201,11 @@ export const useBulletContext = (assetContext: IAssetContext, effects: IEffectCo
     const dispose = useCallback(
         (ids: string[]) => {
             ids.forEach((id) => {
-                bulletGroupDispose(allBullets[id]);
+                bulletGroupDispose(allBullets[id], glowLayer);
                 delete allBullets[id];
             });
         },
-        [allBullets],
+        [allBullets, glowLayer],
     );
 
     const addBulletGroup = useMemo(() => {
@@ -212,7 +228,7 @@ export const useBulletContext = (assetContext: IAssetContext, effects: IEffectCo
                 timings,
                 uid,
             } = makeBulletPattern(preparedInstruction.patternOptions, bulletCache, scene, supressNotPrecomputedWarning);
-            const material = makeBulletMaterial(preparedInstruction.materialOptions, assets, scene);
+
             const mesh = makeBulletMesh(preparedInstruction.meshOptions, assets, scene);
             const behaviour = makeBulletBehaviour(
                 preparedInstruction.behaviourOptions,
@@ -234,13 +250,18 @@ export const useBulletContext = (assetContext: IAssetContext, effects: IEffectCo
 
             makeInstances(mesh, timings.length);
 
+            const material = makeBulletMaterial(preparedInstruction.materialOptions, assets, scene);
+            const glow = preparedInstruction.materialOptions.glow;
+            if (preparedInstruction.materialOptions.glow) {
+                glowLayer.referenceMeshToUseItsOwnMaterial(mesh);
+            }
             mesh.material = material;
 
             const translationFromParent = preparedInstruction.behaviourOptions.translationFromParent;
             const rotationFromParent = preparedInstruction.behaviourOptions.rotationFromParent;
             const disableWarning = preparedInstruction.behaviourOptions.disableWarning || false;
 
-            behaviour.init({
+            const behaviourInitArgs = {
                 material,
                 initialPositions,
                 initialVelocities,
@@ -252,7 +273,17 @@ export const useBulletContext = (assetContext: IAssetContext, effects: IEffectCo
                 uid,
                 bulletCache,
                 scene,
-            });
+            };
+
+            if (behaviour instanceof EnemyLaserBehaviour) {
+                if (!preparedInstruction.meshOptions.laserLength) throw new Error('mesh is laser, but no laserLength specified');
+                behaviour.init({
+                    ...behaviourInitArgs,
+                    laserLength: preparedInstruction.meshOptions.laserLength,
+                });
+            } else {
+                behaviour.init(behaviourInitArgs);
+            }
 
             const { lifespan } = preparedInstruction;
             const timeSinceStart = 0;
@@ -268,6 +299,7 @@ export const useBulletContext = (assetContext: IAssetContext, effects: IEffectCo
                 translationFromParent,
                 rotationFromParent,
                 disableWarning,
+                glow,
                 instruction: preparedInstruction,
                 lifespan,
                 timeSinceStart,
@@ -278,7 +310,7 @@ export const useBulletContext = (assetContext: IAssetContext, effects: IEffectCo
             allBullets[newID] = bulletGroup;
             return newID;
         };
-    }, [assetsLoaded, scene, bulletCache, assets, environmentCollision, allBullets]);
+    }, [assetsLoaded, scene, bulletCache, assets, environmentCollision, allBullets, glowLayer]);
 
     useDeltaBeforeRender((scene, deltaS) => {
         const toRemove: string[] = [];

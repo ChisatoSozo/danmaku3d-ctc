@@ -12,22 +12,31 @@ export const TestActor = () => {
         if (!addBulletGroup) return;
         addBulletGroup(transformNodeRef.current, {
             patternOptions: {
-                num: 100,
+                num: 5,
                 repeat: {
-                    times: 1000,
-                    delay: 0.01,
+                    times: 2000,
+                    delay: 0.02,
                 },
-                speed: 4,
-                radius: 2,
+                speed: 0.001,
+                radius: 0.5,
             },
             meshOptions: {
+                mesh: 'laser',
                 radius: 0.1,
+                laserLength: 40,
             },
             materialOptions: {
-                color: [0, 0, 1],
+                material: 'laser',
+                color: [1, 0, 0],
+                glow: false,
             },
             behaviourOptions: {
+                behaviour: 'linearLaser',
                 rotationFromParent: true,
+            },
+            endTimingOptions: {
+                timing: 'uniform',
+                time: 2,
             },
             lifespan: 20,
         });

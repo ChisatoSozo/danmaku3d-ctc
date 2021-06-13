@@ -2,6 +2,4 @@ export type DeepPartial<T> = {
     [P in keyof T]?: DeepPartial<T[P]>;
 };
 
-type Without<T, K> = {
-    [L in Exclude<keyof T, K>]: T[L];
-};
+export type ValidateShape<T, Shape> = Exclude<keyof T, keyof Shape> extends never ? T : never;

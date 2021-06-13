@@ -6,7 +6,7 @@ import { DifficultyNumber } from '../utils/Constants';
 
 type TypeOrFunc<T> = T | ((difficulty: DifficultyNumber) => T);
 type DeepTypeOrFunc<T> = {
-    [P in keyof T]?: TypeOrFunc<T[P]>;
+    [P in keyof T]: TypeOrFunc<T[P]>;
 };
 
 export interface MaterialOptions {
@@ -16,6 +16,7 @@ export interface MaterialOptions {
     uid: string;
     hasAlpha?: boolean;
     alpha?: number;
+    glow?: boolean;
 }
 
 export interface PatternOptions {
@@ -50,6 +51,7 @@ export interface EndTimingOptions {
 export interface MeshOptions {
     mesh: string;
     radius: number;
+    laserLength?: number;
     uid: string;
 }
 

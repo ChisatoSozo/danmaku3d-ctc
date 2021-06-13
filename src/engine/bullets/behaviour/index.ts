@@ -3,11 +3,13 @@ import { BehaviourOptions } from '../../types/BulletTypes';
 import { capFirst } from '../../utils/Utils';
 import { BulletBehaviour } from './BulletBehaviour';
 import { makeLinearBehaviour } from './LinearBehaviour';
+import { makeLinearLaserBehaviour } from './LinearLaserBehaviour';
 
 const behaviourMap: {
     [behaviourName: string]: MakeBehaviour;
 } = {
     makeLinearBehaviour,
+    makeLinearLaserBehaviour,
 };
 
 export type MakeBehaviour = (
