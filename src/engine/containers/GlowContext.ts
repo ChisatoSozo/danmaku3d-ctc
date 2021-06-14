@@ -13,7 +13,6 @@ export const useGlowContext = () => {
     const scene = useScene();
     const glowLayer = useMemo(() => {
         const glowLayer = new GlowLayer('glow', scene, {});
-        glowLayer.intensity = 0.4;
         return glowLayer as unknown as GlowLayerType;
     }, [scene]);
     return { glowLayer };

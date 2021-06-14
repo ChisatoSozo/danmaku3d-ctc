@@ -110,7 +110,7 @@ interface DifferentialPositionVelocityCollisionSystemArgs {
 export default class DifferentialPositionVelocityCollisionSystem {
     private positionTextures: CustomFloatProceduralTexture[];
     private velocityTextures: CustomFloatProceduralTexture[];
-    private collisionTextures: CustomFloatProceduralTexture[];
+    public collisionTextures: CustomFloatProceduralTexture[];
     private allTextures: CustomFloatProceduralTexture[];
     public collisionResult: CustomFloatProceduralTexture;
     private reducerLayers: CustomFloatProceduralTexture[];

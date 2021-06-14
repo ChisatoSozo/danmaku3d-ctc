@@ -1,14 +1,14 @@
 import { Effect } from '@babylonjs/core';
 import { MakeBehaviour } from '.';
 import { glsl } from '../../utils/BabylonUtils';
-import { collisionSnippet, mainHeaderSnippet, uniformSnippet } from './CommonBehaviourShaders';
+import { collisionSnippet, mainLaserHeaderSnippet, uniformSnippet } from './CommonBehaviourShaders';
 import { EnemyLaserBehaviour } from './EnemyLaserBehaviour';
 
 Effect.ShadersStore['linearLaserBehaviourPositionPixelShader'] = glsl`
     ${uniformSnippet}
 
     void main()	{
-        ${mainHeaderSnippet}
+        ${mainLaserHeaderSnippet}
 
         vec3 out_Position = position + (velocity * delta);
 
@@ -23,7 +23,7 @@ Effect.ShadersStore['linearLaserBehaviourVelocityPixelShader'] = glsl`
 
     void main() {
 
-        ${mainHeaderSnippet}
+        ${mainLaserHeaderSnippet}
 
         vec3 out_Velocity = velocity;
 

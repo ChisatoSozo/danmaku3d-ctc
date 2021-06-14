@@ -40,7 +40,7 @@ export class BulletBehaviour {
     protected radius: number;
     public bulletValue: number;
     private initialValuesFunction?: (texture: CustomFloatProceduralTexture) => void;
-    private diffSystem?: DifferentialPositionVelocityCollisionSystem;
+    protected diffSystem?: DifferentialPositionVelocityCollisionSystem;
 
     private material?: ShaderMaterial;
     private ready: boolean;

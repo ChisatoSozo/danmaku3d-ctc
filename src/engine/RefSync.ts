@@ -38,6 +38,7 @@ interface GlobalActorRefs {
         | {
               position: Vector3;
           };
+    target?: TransformNode;
     enemies: GlobalEnemy[];
     bombs: GlobalBomb[];
     bombPositionBuffer: number[];

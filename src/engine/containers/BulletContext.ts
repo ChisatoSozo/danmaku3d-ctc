@@ -173,6 +173,8 @@ const bulletGroupDispose = (group: BulletGroup, glowLayer: GlowLayer) => {
 
 export const BulletContext = React.createContext<IBulletContext>(defaultBulletContext());
 
+const allBullets: BulletGroupMap = {};
+
 export const useBulletContext = (
     assetContext: IAssetContext,
     effects: IEffectContext,
@@ -196,8 +198,6 @@ export const useBulletContext = (
         [],
     );
 
-    const allBullets = useMemo<BulletGroupMap>(() => ({}), []);
-
     const dispose = useCallback(
         (ids: string[]) => {
             ids.forEach((id) => {
@@ -205,7 +205,7 @@ export const useBulletContext = (
                 delete allBullets[id];
             });
         },
-        [allBullets, glowLayer],
+        [glowLayer],
     );
 
     const addBulletGroup = useMemo(() => {
@@ -310,7 +310,7 @@ export const useBulletContext = (
             allBullets[newID] = bulletGroup;
             return newID;
         };
-    }, [assetsLoaded, scene, bulletCache, assets, environmentCollision, allBullets, glowLayer]);
+    }, [assetsLoaded, scene, bulletCache, assets, environmentCollision, glowLayer]);
 
     useDeltaBeforeRender((scene, deltaS) => {
         const toRemove: string[] = [];
@@ -358,6 +358,7 @@ export const useBulletContext = (
                         }
                         if (collision.player) {
                             if (!playerInvulnerable.current) {
+                                console.log('hit');
                                 LS.PLAYER -= 1;
                                 LS.BOMB = LS.INITIAL_BOMB;
                                 playerInvulnerable.current = true;

@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { useEngine } from 'react-babylonjs';
 import { useTexture } from '../hooks/useTexture';
 import { useXR } from '../hooks/useXR';
+import { globalActorRefs } from '../RefSync';
 import { TARGET_LENGTH } from '../utils/Constants';
 
 export const PlayerCamera = () => {
@@ -10,6 +11,7 @@ export const PlayerCamera = () => {
     const canvas = engine?.getRenderingCanvas();
     const cameraRef = useRef();
     const transformNodeRef = useRef<TransformNode>();
+    const targetRef = useRef<TransformNode>();
     const texture = useTexture('crosshair');
     const xr = useXR();
 
@@ -52,10 +54,15 @@ export const PlayerCamera = () => {
         };
     }, [canvas, cameraHandler]);
 
+    useEffect(() => {
+        if (xr || !targetRef.current) return;
+        globalActorRefs.target = targetRef.current;
+    }, [xr, texture]);
+
     return (
         <transformNode name="cameraTransform" ref={transformNodeRef} position={new Vector3(0, 0, 0)}>
             {texture && !xr && (
-                <transformNode name="targetTransform" position={new Vector3(0, 0, TARGET_LENGTH)}>
+                <transformNode name="targetTransform" position={new Vector3(0, 0, TARGET_LENGTH)} ref={targetRef}>
                     <plane
                         position={new Vector3(0, 0, -(TARGET_LENGTH - 1))}
                         renderingGroupId={1}

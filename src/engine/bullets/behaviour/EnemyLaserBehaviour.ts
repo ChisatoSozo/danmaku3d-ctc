@@ -19,11 +19,14 @@ export interface LaserInitArgs extends InitArgs {
 export class EnemyLaserBehaviour extends EnemyBulletBehaviour {
     constructor(args: EnemyBulletBehaviourArgs) {
         super(args);
-        this.collisionShader = 'enemyBulletCollision';
+        this.collisionShader = 'enemyLaserCollision';
     }
 
     init(args: LaserInitArgs) {
         super.init(args);
         args.material.setFloat('laserLength', args.laserLength);
+        this.diffSystem?.collisionTextures.forEach((texture) => {
+            texture.setFloat('laserLength', args.laserLength);
+        });
     }
 }

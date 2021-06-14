@@ -14,7 +14,7 @@ export const TestActor = () => {
             patternOptions: {
                 num: 5,
                 repeat: {
-                    times: 2000,
+                    times: 5000,
                     delay: 0.02,
                 },
                 speed: 0.001,
@@ -37,6 +37,27 @@ export const TestActor = () => {
             endTimingOptions: {
                 timing: 'uniform',
                 time: 2,
+            },
+            lifespan: 50,
+        });
+        addBulletGroup(transformNodeRef.current, {
+            patternOptions: {
+                num: 300,
+                repeat: {
+                    times: 5,
+                    delay: 3,
+                },
+                speed: 2,
+                radius: 0.5,
+            },
+            meshOptions: {
+                radius: 0.3,
+            },
+            materialOptions: {
+                color: [0, 0, 1],
+            },
+            behaviourOptions: {
+                rotationFromParent: true,
             },
             lifespan: 20,
         });
