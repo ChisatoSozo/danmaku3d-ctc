@@ -26,7 +26,11 @@ class MusicClass {
         document.body.addEventListener('touchstart', this.initFunc);
     }
 
-    init() {
+    registerBGM = (name: string, file?: string) => {
+        this.BGMs[name] = new BGM(`/assets/music/${file || name}.mp3`, 0.3);
+    };
+
+    init = () => {
         if (this.didInit) return;
 
         document.body.removeEventListener('keydown', this.initFunc);
@@ -39,9 +43,9 @@ class MusicClass {
                 this.startedAt = Date.now();
             });
         }
-    }
+    };
 
-    play(activeSound: string) {
+    play = (activeSound: string) => {
         if (this.activeSound !== activeSound && activeSound) this.stop();
         if (activeSound) this.activeSound = activeSound;
         if (LS.MUSIC === 'OFF' || !this.activeSound) return;
@@ -53,20 +57,20 @@ class MusicClass {
             this.BGMs[this.activeSound].play(0);
         }
         this.pausedAt = 0;
-    }
+    };
 
-    pause() {
+    pause = () => {
         if (this.activeSound) {
             this.pausedAt = Date.now() - this.startedAt;
         }
         this.stop();
-    }
+    };
 
-    stop() {
+    stop = () => {
         if (this.activeSound) {
             this.BGMs[this.activeSound].stop();
         }
-    }
+    };
 }
 
 export default new MusicClass();

@@ -1,13 +1,10 @@
 import {
     AbstractAssetTask,
     AssetContainer,
-    AssetsManager,
     ContainerAssetTask,
-    IParticleSystem,
     Mesh,
     MeshBuilder,
-    ParticleHelper,
-    ParticleSystemSet,
+    ParticleSystem,
     Scene,
     Texture,
     TextureAssetTask,
@@ -15,7 +12,8 @@ import {
 import parsePath from 'parse-filepath';
 import React, { useEffect, useState } from 'react';
 import { useScene } from 'react-babylonjs';
-import { nullVector, QualityName } from '../utils/Constants';
+import { CustomAssetsManager, ParticlesAssetTask } from '../forks/CustomAssetManager';
+import { QualityName } from '../utils/Constants';
 import { LS } from './LSContext';
 
 export interface Assets {
@@ -29,7 +27,7 @@ export interface Assets {
         [key: string]: Mesh | undefined;
     };
     particles: {
-        [key: string]: IParticleSystem | undefined;
+        [key: string]: ParticleSystem | undefined;
     };
 }
 export interface IAssetContext {
@@ -78,10 +76,9 @@ const assetFunctions: { [key: string]: (scene: Scene) => Mesh } = {
 
 const loadAssets = async (scene: Scene, assetPaths: string[]) => {
     return new Promise<Assets>((resolve, reject) => {
-        const assetsManager = new AssetsManager(scene);
+        const assetsManager = new CustomAssetsManager(scene);
 
         const loadedMeshes: { [key: string]: Mesh } = {};
-        const loadedParticles: { [key: string]: IParticleSystem } = {};
 
         assetPaths.forEach((path) => {
             let assetTask: AbstractAssetTask;
@@ -110,12 +107,8 @@ const loadAssets = async (scene: Scene, assetPaths: string[]) => {
                     loadedMeshes[name] = assetFunctions[name](scene);
                     break;
                 case '.particles':
-                    ParticleHelper.BaseAssetsUrl = directory;
-                    ParticleSystemSet.BaseAssetsUrl = directory;
-                    ParticleHelper.CreateAsync(name, scene, false).then(function (set) {
-                        set.systems[0].emitter = nullVector;
-                        loadedParticles[name] = set.systems[0];
-                    });
+                    assetTask = assetsManager.addParticlesTask(name, directory + '/');
+                    assetTask.onError = console.error;
                     break;
                 default:
                     reject(`Unknown asset extension ${extension}`);
@@ -134,6 +127,11 @@ const loadAssets = async (scene: Scene, assetPaths: string[]) => {
                 if (task instanceof ContainerAssetTask) {
                     if (task.name in assets.containers) reject(`Duplicate container name ${task.name}`);
                     assets.containers[task.name] = task.loadedContainer;
+                    return;
+                }
+                if (task instanceof ParticlesAssetTask) {
+                    if (task.name in assets.particles) reject(`Duplicate container name ${task.name}`);
+                    assets.particles[task.name] = task.loadedParticleSystem;
                     return;
                 }
                 reject('task was not an instanceof any known AssetTask');

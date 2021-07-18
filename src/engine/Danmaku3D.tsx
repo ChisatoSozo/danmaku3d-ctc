@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { Scene } from 'react-babylonjs';
 import { GameContainer } from './containers/GameContainer';
 import Engine from './forks/Engine';
+import { GameSetup } from './GameSetup';
 import { useWindowSize } from './hooks/useWindowSize';
 import { BindControls } from './player/BindControls';
 import { Player } from './player/Player';
@@ -32,6 +33,7 @@ export const Danmaku3D: React.FC<Danmaku3DProps> = ({
     return (
         <Engine width={windowSize.width} height={windowSize.height} antialias canvasId="babylonJS">
             <Scene clearColor={_clearColor}>
+                <GameSetup clearColor={clearColor} />
                 <GameContainer assetPaths={assetPaths} xrEnabled={xrEnabled}>
                     <Player selectedPlayer={selectedPlayer} />
                     <BindControls />
